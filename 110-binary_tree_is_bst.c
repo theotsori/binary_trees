@@ -8,7 +8,7 @@
 */
 int binary_tree_is_bst(const binary_tree_t *tree)
 {
-	static const binary_tree_t * prev = NULL;
+	static const binary_tree_t *prev;
 
 	if (tree == NULL)
 		return (0);
@@ -16,7 +16,7 @@ int binary_tree_is_bst(const binary_tree_t *tree)
 	if (!binary_tree_is_bst(tree->left))
 		return (1);
 
-	if (prev != NULL && prev->n >= tree->n)
+	if (prev != NULL && tree->n <= prev->n)
 		return (1);
 	prev = tree;
 
