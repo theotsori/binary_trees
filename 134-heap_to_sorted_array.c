@@ -1,40 +1,79 @@
 #include "binary_trees.h"
 
 /**
- * heap_to_sorted_array - converts a Binary Max Heap to a sorted array
- * @heap: pointer to the root node of the heap to convert
- * @size: address to store the size of the array
- *
- * Return: pointer to the sorted array, or NULL on failure
+ * heap_size - Computes the number of nodes in a binary tree
+ * @tree: Pointer to the root node of the tree
+ * Return: The number of nodes in the tree
+ */
+size_t heap_size(const heap_t *tree)
+{
+	if (!tree)
+		return (0);
+
+	return (1 + heap_size(tree->left) + heap_size(tree->right));
+}
+
+/**
+ * heapify_down - Maintains the Max Heap property by swapping
+ * nodes down the tree as necessary
+ * @heap: Pointer to the root node of the heap
+ */
+void heapify_down(heap_t *heap)
+{
+	heap_t *largest = heap;
+
+	if (heap->left && heap->left->n > largest->n)
+		largest = heap->left;
+
+	if (heap->right && heap->right->n > largest->n)
+		largest = heap->right;
+
+	if (largest != heap)
+	{
+		int temp = heap->n;
+
+		heap->n = largest->n;
+		largest->n = temp;
+		heapify_down(largest);
+	}
+}
+
+/**
+ * heap_to_sorted_array - Converts a Max Binary Heap to a sorted array of ints
+ * @heap: Pointer to the root node of the heap
+ * @size: Address to store the size of the array
+ * Return: A pointer to the sorted array of ints, or NULL on failure
  */
 int *heap_to_sorted_array(heap_t *heap, size_t *size)
 {
-	int *array, temp;
+	int *array;
 	size_t i;
 
-	if (heap == NULL || size == NULL)
+	if (!heap || !size)
 		return (NULL);
 
-	*size = binary_tree_size(heap);
+	*size = heap_size(heap);
 	array = malloc(*size * sizeof(int));
-	if (array == NULL)
+	if (!array)
 		return (NULL);
 
 	for (i = 0; i < *size; i++)
 	{
-		array[i] = heap_extract(&heap);
-		if (array[i] == 0)
-		{
-			free(array);
-			return (NULL);
-		}
-	}
-
-	for (i = 0; i < *size / 2; i++)
-	{
-		temp = array[i];
-		array[i] = array[*size - i - 1];
-		array[*size - i - 1] = temp;
+		array[i] = heap->n;
+		if (i == *size - 1)
+			break;
+		heap->n = heap->parent->n;
+		if (heap->parent->left == heap)
+			heap->parent->left = NULL;
+		else
+			heap->parent->right = NULL;
+		heapify_down(heap);
+		while (heap->parent && !heap->left && !heap->right)
+			heap = heap->parent;
+		if (heap->right)
+			heap = heap->right;
+		else
+			heap = heap->left;
 	}
 
 	return (array);
