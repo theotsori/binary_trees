@@ -1,90 +1,105 @@
 #include "binary_trees.h"
 
 /**
- * heap_size - Measures the size of a heap
- * @root: Pointer to the root node of the heap
+ * count_nodes - Count the number of nodes in a binary tree
+ * @root: Pointer to the root node of the tree to count nodes in
  *
- * Return: The size of the heap
+ * Return: The number of nodes in the binary tree
  */
-size_t heap_size(const binary_tree_t *root)
+size_t count_nodes(heap_t *root)
 {
-	if (root == NULL)
-		return (0);
-	return (1 + heap_size(root->left) + heap_size(root->right));
+	size_t count = 0;
+
+	if (root)
+	{
+		count++;
+		count += count_nodes(root->left);
+		count += count_nodes(root->right);
+	}
+
+	return (count);
 }
 
 /**
- * heapify - Heapifies a binary tree node
- * @node: Pointer to the root node of the binary tree to heapify
+ * heapify - Heapify a binary tree
+ * @node: Pointer to the root node of the tree to heapify
  */
 void heapify(heap_t *node)
 {
-	heap_t *largest = node;
+	heap_t *max = NULL;
+	int temp;
 
-	if (node->left && node->left->n > largest->n)
-		largest = node->left;
+	if (!node)
+		return;
 
-	if (node->right && node->right->n > largest->n)
-		largest = node->right;
-
-	if (largest != node)
+	while (1)
 	{
-		int tmp = node->n;
+		if (node->left && node->left->n > node->n)
+			max = node->left;
+		else
+			max = node;
 
-		node->n = largest->n;
-		largest->n = tmp;
-		heapify(largest);
+		if (node->right && node->right->n > max->n)
+			max = node->right;
+
+		if (max == node)
+			break;
+
+		temp = node->n;
+		node->n = max->n;
+		max->n = temp;
+		node = max;
 	}
 }
 
 /**
- * heap_insert - Inserts a value in a max binary heap
- * @root: Double pointer to the root node of the heap
- * @value: Value to store in the new node
- *
+ * heap_insert - Insert a value into a Max Binary Heap
+ * @root: Double pointer to the root node of the Heap to insert the value in
+ * @value: Value to insert
  * Return: Pointer to the created node, or NULL on failure
  */
 heap_t *heap_insert(heap_t **root, int value)
 {
-	heap_t *node, *parent;
-	int tmp;
+	heap_t *new_node, *parent;
+	size_t n_nodes;
 
-	if (root == NULL)
+	if (!root)
 		return (NULL);
-
-	if (*root == NULL)
+	n_nodes = count_nodes(*root);
+	if (!n_nodes)
 	{
 		*root = binary_tree_node(NULL, value);
 		return (*root);
 	}
-
-	node = *root;
-	while (node->left != NULL)
+	parent = *root;
+	while (parent->left && parent->right)
 	{
-		if (node->right == NULL)
-			break;
-		if (heap_size(node->left) > heap_size(node->right))
-			node = node->right;
+		if (count_nodes(parent->left) == count_nodes(parent->right))
+			parent = parent->left;
 		else
-			node = node->left;
+			parent = parent->right;
 	}
-
-	parent = node->parent;
-	while (parent != NULL && node->n > parent->n)
+	if (!parent->left)
 	{
-		tmp = node->n;
-		node->n = parent->n;
-		parent->n = tmp;
-		node = parent;
-		parent = node->parent;
+		new_node = binary_tree_node(parent, value);
+		if (!new_node)
+			return (NULL);
+		parent->left = new_node;
 	}
-
-	if (node->left == NULL)
-		node->left = binary_tree_node(node, value);
 	else
-		node->right = binary_tree_node(node, value);
-
+	{
+		new_node = binary_tree_node(parent, value);
+		if (!new_node)
+			return (NULL);
+		parent->right = new_node;
+	}
+	while (new_node->parent && new_node->n > new_node->parent->n)
+	{
+		new_node->n ^= new_node->parent->n;
+		new_node->parent->n ^= new_node->n;
+		new_node->n ^= new_node->parent->n;
+		new_node = new_node->parent;
+	}
 	heapify(*root);
-
-	return (node->left ? node->left : node->right);
+	return (new_node);
 }
